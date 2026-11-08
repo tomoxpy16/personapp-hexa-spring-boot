@@ -18,12 +18,18 @@ public class ProfesionMapperMaria {
 	@Autowired
 	private EstudiosMapperMaria estudiosMapperMaria;
 
+	/** Domain -> Adapter. Los estudios se persisten desde su propio adaptador. */
 	public ProfesionEntity fromDomainToAdapter(Profession profession) {
+		ProfesionEntity profesionEntity = fromDomainToAdapterShallow(profession);
+		profesionEntity.setEstudios(new ArrayList<EstudiosEntity>());
+		return profesionEntity;
+	}
+
+	public ProfesionEntity fromDomainToAdapterShallow(Profession profession) {
 		ProfesionEntity profesionEntity = new ProfesionEntity();
 		profesionEntity.setId(profession.getIdentification());
 		profesionEntity.setNom(profession.getName());
 		profesionEntity.setDes(validateDes(profession.getDescription()));
-		profesionEntity.setEstudios(validateEstudios(profession.getStudies()));
 		return profesionEntity;
 	}
 
@@ -31,18 +37,17 @@ public class ProfesionMapperMaria {
 		return description != null ? description : "";
 	}
 
-	private List<EstudiosEntity> validateEstudios(List<Study> studies) {
-		return studies != null && !studies.isEmpty() ? studies.stream()
-				.map(study -> estudiosMapperMaria.fromDomainToAdapter(study)).collect(Collectors.toList())
-				: new ArrayList<EstudiosEntity>();
+	public Profession fromAdapterToDomain(ProfesionEntity profesionEntity) {
+		Profession profession = fromAdapterToDomainShallow(profesionEntity);
+		profession.setStudies(validateStudies(profesionEntity.getEstudios()));
+		return profession;
 	}
 
-	public Profession fromAdapterToDomain(ProfesionEntity profesionEntity) {
+	public Profession fromAdapterToDomainShallow(ProfesionEntity profesionEntity) {
 		Profession profession = new Profession();
 		profession.setIdentification(profesionEntity.getId());
 		profession.setName(profesionEntity.getNom());
 		profession.setDescription(validateDescription(profesionEntity.getDes()));
-		profession.setStudies(validateStudies(profesionEntity.getEstudios()));
 		return profession;
 	}
 
@@ -51,8 +56,8 @@ public class ProfesionMapperMaria {
 	}
 
 	private List<Study> validateStudies(List<EstudiosEntity> estudiosEntity) {
-		return estudiosEntity != null && !estudiosEntity.isEmpty() ? estudiosEntity.stream()
-				.map(estudio -> estudiosMapperMaria.fromAdapterToDomain(estudio)).collect(Collectors.toList())
+		return estudiosEntity != null && !estudiosEntity.isEmpty()
+				? estudiosEntity.stream().map(estudiosMapperMaria::fromAdapterToDomain).collect(Collectors.toList())
 				: new ArrayList<Study>();
 	}
 }

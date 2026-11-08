@@ -1,7 +1,7 @@
 package co.edu.javeriana.as.personapp.mariadb.entity;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -11,8 +11,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
 
 /**
  *
@@ -30,8 +28,7 @@ public class EstudiosEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 	@EmbeddedId
 	protected EstudiosEntityPK estudiosEntityPK;
-	@Temporal(TemporalType.DATE)
-	private Date fecha;
+	private LocalDate fecha;
 	@Column(length = 50)
 	private String univer;
 	@JoinColumn(name = "cc_per", referencedColumnName = "cc", nullable = false, insertable = false, updatable = false)
@@ -60,11 +57,11 @@ public class EstudiosEntity implements Serializable {
 		this.estudiosEntityPK = estudiosEntityPK;
 	}
 
-	public Date getFecha() {
+	public LocalDate getFecha() {
 		return fecha;
 	}
 
-	public void setFecha(Date fecha) {
+	public void setFecha(LocalDate fecha) {
 		this.fecha = fecha;
 	}
 

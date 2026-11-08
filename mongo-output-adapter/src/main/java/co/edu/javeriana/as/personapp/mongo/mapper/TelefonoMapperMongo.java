@@ -7,7 +7,6 @@ import co.edu.javeriana.as.personapp.domain.Person;
 import co.edu.javeriana.as.personapp.domain.Phone;
 import co.edu.javeriana.as.personapp.mongo.document.PersonaDocument;
 import co.edu.javeriana.as.personapp.mongo.document.TelefonoDocument;
-import lombok.NonNull;
 
 @Mapper
 public class TelefonoMapperMongo {
@@ -23,7 +22,7 @@ public class TelefonoMapperMongo {
 		return telefonoDocument;
 	}
 
-	private PersonaDocument validateDuenio(@NonNull Person owner) {
+	private PersonaDocument validateDuenio(Person owner) {
 		return owner != null ? personaMapperMongo.fromDomainToAdapter(owner) : new PersonaDocument();
 	}
 
@@ -35,7 +34,7 @@ public class TelefonoMapperMongo {
 		return phone;
 	}
 
-	private @NonNull Person validateOwner(PersonaDocument duenio) {
-		return duenio != null ? personaMapperMongo.fromAdapterToDomain(duenio) : new Person();
+	private Person validateOwner(PersonaDocument duenio) {
+		return duenio != null ? personaMapperMongo.fromAdapterToDomainShallow(duenio) : new Person();
 	}
 }

@@ -14,8 +14,13 @@ import co.edu.javeriana.as.personapp.domain.Study;
 import co.edu.javeriana.as.personapp.mongo.document.EstudiosDocument;
 import co.edu.javeriana.as.personapp.mongo.document.PersonaDocument;
 import co.edu.javeriana.as.personapp.mongo.document.TelefonoDocument;
-import lombok.NonNull;
 
+/**
+ * Mapper PersonaDocument (adapter MongoDB) <-> Person (dominio).
+ *
+ * CORRECCION: igual que en MariaDB, se cortan los ciclos Persona -> Estudio ->
+ * Persona usando referencias "shallow" (sin colecciones).
+ */
 @Mapper
 public class PersonaMapperMongo {
 
@@ -25,6 +30,10 @@ public class PersonaMapperMongo {
 	@Autowired
 	private TelefonoMapperMongo telefonoMapperMongo;
 
+	/**
+	 * Domain -> Adapter. telefonos/estudios son @ReadOnlyProperty (se resuelven
+	 * por lookup), por eso no se mapean al guardar.
+	 */
 	public PersonaDocument fromDomainToAdapter(Person person) {
 		PersonaDocument personaDocument = new PersonaDocument();
 		personaDocument.setId(person.getIdentification());
@@ -32,12 +41,10 @@ public class PersonaMapperMongo {
 		personaDocument.setApellido(person.getLastName());
 		personaDocument.setGenero(validateGenero(person.getGender()));
 		personaDocument.setEdad(validateEdad(person.getAge()));
-		personaDocument.setEstudios(validateEstudios(person.getStudies()));
-		personaDocument.setTelefonos(validateTelefonos(person.getPhoneNumbers()));
 		return personaDocument;
 	}
 
-	private String validateGenero(@NonNull Gender gender) {
+	private String validateGenero(Gender gender) {
 		return gender == Gender.FEMALE ? "F" : gender == Gender.MALE ? "M" : " ";
 	}
 
@@ -45,31 +52,26 @@ public class PersonaMapperMongo {
 		return age != null && age >= 0 ? age : null;
 	}
 
-	private List<EstudiosDocument> validateEstudios(List<Study> studies) {
-		return studies != null && !studies.isEmpty() ? studies.stream()
-				.map(study -> estudiosMapperMongo.fromDomainToAdapter(study)).collect(Collectors.toList())
-				: new ArrayList<EstudiosDocument>();
-	}
-
-	private List<TelefonoDocument> validateTelefonos(List<Phone> phoneNumbers) {
-		return phoneNumbers != null && !phoneNumbers.isEmpty() ? phoneNumbers.stream()
-				.map(phone -> telefonoMapperMongo.fromDomainToAdapter(phone)).collect(Collectors.toList())
-				: new ArrayList<TelefonoDocument>();
-	}
-
+	/** Adapter -> Domain completo (con telefonos y estudios). */
 	public Person fromAdapterToDomain(PersonaDocument personaDocument) {
+		Person person = fromAdapterToDomainShallow(personaDocument);
+		person.setStudies(validateStudies(personaDocument.getEstudios()));
+		person.setPhoneNumbers(validatePhones(personaDocument.getTelefonos()));
+		return person;
+	}
+
+	/** Adapter -> Domain sin relaciones (corta la recursion). */
+	public Person fromAdapterToDomainShallow(PersonaDocument personaDocument) {
 		Person person = new Person();
 		person.setIdentification(personaDocument.getId());
 		person.setFirstName(personaDocument.getNombre());
 		person.setLastName(personaDocument.getApellido());
 		person.setGender(validateGender(personaDocument.getGenero()));
 		person.setAge(validateAge(personaDocument.getEdad()));
-		person.setStudies(validateStudies(personaDocument.getEstudios()));
-		person.setPhoneNumbers(validatePhones(personaDocument.getTelefonos()));
 		return person;
 	}
 
-	private @NonNull Gender validateGender(String genero) {
+	private Gender validateGender(String genero) {
 		return "F".equals(genero) ? Gender.FEMALE : "M".equals(genero) ? Gender.MALE : Gender.OTHER;
 	}
 
@@ -78,14 +80,14 @@ public class PersonaMapperMongo {
 	}
 
 	private List<Study> validateStudies(List<EstudiosDocument> estudiosDocuments) {
-		return estudiosDocuments != null && !estudiosDocuments.isEmpty() ? estudiosDocuments.stream()
-				.map(estudio -> estudiosMapperMongo.fromAdapterToDomain(estudio)).collect(Collectors.toList())
+		return estudiosDocuments != null && !estudiosDocuments.isEmpty()
+				? estudiosDocuments.stream().map(estudiosMapperMongo::fromAdapterToDomain).collect(Collectors.toList())
 				: new ArrayList<Study>();
 	}
 
 	private List<Phone> validatePhones(List<TelefonoDocument> telefonosDocuments) {
-		return telefonosDocuments != null && !telefonosDocuments.isEmpty() ? telefonosDocuments.stream()
-				.map(telefono -> telefonoMapperMongo.fromAdapterToDomain(telefono)).collect(Collectors.toList())
+		return telefonosDocuments != null && !telefonosDocuments.isEmpty()
+				? telefonosDocuments.stream().map(telefonoMapperMongo::fromAdapterToDomain).collect(Collectors.toList())
 				: new ArrayList<Phone>();
 	}
 }

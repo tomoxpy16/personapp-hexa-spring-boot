@@ -3,7 +3,10 @@ package co.edu.javeriana.as.personapp.mongo.adapter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.BasicQuery;
 
 import com.mongodb.MongoWriteException;
 
@@ -18,28 +21,34 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Adapter("personOutputAdapterMongo")
 public class PersonOutputAdapterMongo implements PersonOutputPort {
-	
+
 	@Autowired
-    private PersonaRepositoryMongo personaRepositoryMongo;
-	
+	private PersonaRepositoryMongo personaRepositoryMongo;
+
 	@Autowired
 	private PersonaMapperMongo personaMapperMongo;
-	
+
+	@Autowired
+	private MongoTemplate mongoTemplate;
+
 	@Override
 	public Person save(Person person) {
 		log.debug("Into save on Adapter MongoDB");
 		try {
 			PersonaDocument persistedPersona = personaRepositoryMongo.save(personaMapperMongo.fromDomainToAdapter(person));
-			return personaMapperMongo.fromAdapterToDomain(persistedPersona);
+			return personaMapperMongo.fromAdapterToDomainShallow(persistedPersona);
 		} catch (MongoWriteException e) {
 			log.warn(e.getMessage());
 			return person;
-		}		
+		}
 	}
 
 	@Override
 	public Boolean delete(Integer identification) {
 		log.debug("Into delete on Adapter MongoDB");
+		// Mongo no tiene llaves foraneas: se eliminan en cascada telefonos y estudios
+		mongoTemplate.remove(new BasicQuery(new Document("primaryDuenio", identification)), "telefono");
+		mongoTemplate.remove(new BasicQuery(new Document("primaryPersona", identification)), "estudios");
 		personaRepositoryMongo.deleteById(identification);
 		return personaRepositoryMongo.findById(identification).isEmpty();
 	}
@@ -54,11 +63,8 @@ public class PersonOutputAdapterMongo implements PersonOutputPort {
 	@Override
 	public Person findById(Integer identification) {
 		log.debug("Into findById on Adapter MongoDB");
-		if (personaRepositoryMongo.findById(identification).isEmpty()) {
-			return null;
-		} else {
-			return personaMapperMongo.fromAdapterToDomain(personaRepositoryMongo.findById(identification).get());
-		}
+		return personaRepositoryMongo.findById(identification).map(personaMapperMongo::fromAdapterToDomain)
+				.orElse(null);
 	}
 
 }
