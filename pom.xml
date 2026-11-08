@@ -10,15 +10,17 @@
 	<description>App Hexagonal (Clean Architecture) Multi Module PersonAPP</description>
 	<packaging>pom</packaging>
 	<properties>
-		<maven.compiler.source>${global.java.version}</maven.compiler.source>
-		<maven.compiler.target>${global.java.version}</maven.compiler.target>
+		<revision>1.0.0</revision>
+		<global.java.version>21</global.java.version>
+		<maven.compiler.release>${global.java.version}</maven.compiler.release>
 		<java.version>${global.java.version}</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<revision>0.0.1-SNAPSHOT</revision>
-		<global.java.version>11</global.java.version>
-		<global.springframework.boot.version>2.7.11</global.springframework.boot.version>
-		<global.springframework.version>5.3.27</global.springframework.version>
+		<global.springframework.boot.version>4.1.2</global.springframework.boot.version>
+		<springdoc.version>3.2.0</springdoc.version>
+		<lombok.version>1.18.48</lombok.version>
+		<maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
+		<flatten.plugin.version>1.7.3</flatten.plugin.version>
 	</properties>
 	<licenses>
 		<license>
@@ -43,17 +45,88 @@
 		<module>rest-input-adapter</module>
 		<module>cli-input-adapter</module>
 	</modules>
+	<dependencyManagement>
+		<dependencies>
+			<!-- BOM de Spring Boot: fija versiones coherentes de Spring, Hibernate, drivers, etc. -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${global.springframework.boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springdoc</groupId>
+				<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+				<version>${springdoc.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.26</version>
+			<version>${lombok.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-to-slf4j</artifactId>
-			<version>2.20.0</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
 	</dependencies>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<version>${global.springframework.boot.version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven.compiler.plugin.version}</version>
+				<configuration>
+					<release>${global.java.version}</release>
+					<parameters>true</parameters>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<!-- Resuelve ${revision} en los POM instalados (CI friendly versions) -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>flatten-maven-plugin</artifactId>
+				<version>${flatten.plugin.version}</version>
+				<configuration>
+					<updatePomFile>true</updatePomFile>
+					<flattenMode>resolveCiFriendliesOnly</flattenMode>
+				</configuration>
+				<executions>
+					<execution>
+						<id>flatten</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>flatten</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>flatten.clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
