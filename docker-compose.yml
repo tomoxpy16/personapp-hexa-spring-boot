@@ -1,0 +1,39 @@
+# Bases de datos para PersonApp. Los scripts de /scripts se ejecutan solos la
+# primera vez que se crean los volumenes (para re-ejecutarlos: docker compose down -v).
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: personapp-mariadb
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./scripts/persona_ddl_maria.sql:/docker-entrypoint-initdb.d/01_persona_ddl_maria.sql:ro
+      - ./scripts/persona_dml_maria.sql:/docker-entrypoint-initdb.d/02_persona_dml_maria.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+
+  mongodb:
+    image: mongo:8.0
+    container_name: personapp-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/persona_ddl_mongo.js:/docker-entrypoint-initdb.d/01_persona_ddl_mongo.js:ro
+      - ./scripts/persona_dml_mongo.js:/docker-entrypoint-initdb.d/02_persona_dml_mongo.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      retries: 20
+
+volumes:
+  mariadb_data:
+  mongodb_data:
