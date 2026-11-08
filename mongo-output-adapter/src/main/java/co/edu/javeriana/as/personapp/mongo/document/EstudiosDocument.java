@@ -7,6 +7,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -17,8 +19,12 @@ import lombok.NoArgsConstructor;
 public class EstudiosDocument {
 	@Id
 	private String id;
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
 	@DocumentReference(lazy = true)
 	private PersonaDocument primaryPersona;
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
 	@DocumentReference(lazy = true)
 	private ProfesionDocument primaryProfesion;
 	private LocalDate fecha;

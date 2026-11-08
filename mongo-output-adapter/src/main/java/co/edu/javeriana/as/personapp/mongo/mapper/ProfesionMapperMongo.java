@@ -14,7 +14,7 @@ import co.edu.javeriana.as.personapp.mongo.document.ProfesionDocument;
 
 @Mapper
 public class ProfesionMapperMongo {
-	
+
 	@Autowired
 	private EstudiosMapperMongo estudiosMapperMongo;
 
@@ -23,7 +23,6 @@ public class ProfesionMapperMongo {
 		profesionDocument.setId(profession.getIdentification());
 		profesionDocument.setNom(profession.getName());
 		profesionDocument.setDes(validateDes(profession.getDescription()));
-		profesionDocument.setEstudios(validateEstudios(profession.getStudies()));
 		return profesionDocument;
 	}
 
@@ -31,18 +30,17 @@ public class ProfesionMapperMongo {
 		return description != null ? description : "";
 	}
 
-	private List<EstudiosDocument> validateEstudios(List<Study> studies) {
-		return studies != null && !studies.isEmpty() ? studies.stream()
-				.map(study -> estudiosMapperMongo.fromDomainToAdapter(study)).collect(Collectors.toList())
-				: new ArrayList<EstudiosDocument>();
+	public Profession fromAdapterToDomain(ProfesionDocument profesionDocument) {
+		Profession profession = fromAdapterToDomainShallow(profesionDocument);
+		profession.setStudies(validateStudies(profesionDocument.getEstudios()));
+		return profession;
 	}
 
-	public Profession fromAdapterToDomain(ProfesionDocument profesionDocument) {
+	public Profession fromAdapterToDomainShallow(ProfesionDocument profesionDocument) {
 		Profession profession = new Profession();
 		profession.setIdentification(profesionDocument.getId());
 		profession.setName(profesionDocument.getNom());
 		profession.setDescription(validateDescription(profesionDocument.getDes()));
-		profession.setStudies(validateStudies(profesionDocument.getEstudios()));
 		return profession;
 	}
 
@@ -51,8 +49,8 @@ public class ProfesionMapperMongo {
 	}
 
 	private List<Study> validateStudies(List<EstudiosDocument> estudiosDocument) {
-		return estudiosDocument != null && !estudiosDocument.isEmpty() ? estudiosDocument.stream()
-				.map(estudio -> estudiosMapperMongo.fromAdapterToDomain(estudio)).collect(Collectors.toList())
+		return estudiosDocument != null && !estudiosDocument.isEmpty()
+				? estudiosDocument.stream().map(estudiosMapperMongo::fromAdapterToDomain).collect(Collectors.toList())
 				: new ArrayList<Study>();
 	}
 }

@@ -7,7 +7,6 @@ import co.edu.javeriana.as.personapp.domain.Person;
 import co.edu.javeriana.as.personapp.domain.Phone;
 import co.edu.javeriana.as.personapp.mariadb.entity.PersonaEntity;
 import co.edu.javeriana.as.personapp.mariadb.entity.TelefonoEntity;
-import lombok.NonNull;
 
 @Mapper
 public class TelefonoMapperMaria {
@@ -23,8 +22,8 @@ public class TelefonoMapperMaria {
 		return telefonoEntity;
 	}
 
-	private PersonaEntity validateDuenio(@NonNull Person owner) {
-		return owner != null ? personaMapperMaria.fromDomainToAdapter(owner) : new PersonaEntity();
+	private PersonaEntity validateDuenio(Person owner) {
+		return owner != null ? personaMapperMaria.fromDomainToAdapterShallow(owner) : new PersonaEntity();
 	}
 
 	public Phone fromAdapterToDomain(TelefonoEntity telefonoEntity) {
@@ -35,7 +34,7 @@ public class TelefonoMapperMaria {
 		return phone;
 	}
 
-	private @NonNull Person validateOwner(PersonaEntity duenio) {
-		return duenio != null ? personaMapperMaria.fromAdapterToDomain(duenio) : new Person();
+	private Person validateOwner(PersonaEntity duenio) {
+		return duenio != null ? personaMapperMaria.fromAdapterToDomainShallow(duenio) : new Person();
 	}
 }

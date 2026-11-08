@@ -71,3 +71,14 @@ build/
 
 ### VS Code ###
 .vscode/
+# Maven flatten plugin
+.flattened-pom.xml
+
+# Logs de la app
+logs/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.settings/
