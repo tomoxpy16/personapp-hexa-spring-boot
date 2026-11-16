@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import co.edu.javeriana.as.personapp.application.port.in.ProfessionInputPort;
+import co.edu.javeriana.as.personapp.application.rules.BusinessRules;
 import co.edu.javeriana.as.personapp.application.port.out.ProfessionOutputPort;
 import co.edu.javeriana.as.personapp.common.annotations.UseCase;
 import co.edu.javeriana.as.personapp.common.exceptions.AlreadyExistsException;
@@ -31,6 +32,7 @@ public class ProfessionUseCase implements ProfessionInputPort {
 
 	@Override
 	public Profession create(Profession profession) throws AlreadyExistsException {
+		BusinessRules.validate(profession);
 		log.debug("Into create on Application Domain");
 		if (professionPersintence.findById(profession.getIdentification()) != null)
 			throw new AlreadyExistsException("The profession with id " + profession.getIdentification()
@@ -40,6 +42,7 @@ public class ProfessionUseCase implements ProfessionInputPort {
 
 	@Override
 	public Profession edit(Integer identification, Profession profession) throws NoExistException {
+		BusinessRules.validate(profession);
 		findOne(identification);
 		profession.setIdentification(identification);
 		return professionPersintence.save(profession);

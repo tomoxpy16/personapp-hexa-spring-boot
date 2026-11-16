@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import co.edu.javeriana.as.personapp.application.port.in.StudyInputPort;
+import co.edu.javeriana.as.personapp.application.rules.BusinessRules;
 import co.edu.javeriana.as.personapp.application.port.out.PersonOutputPort;
 import co.edu.javeriana.as.personapp.application.port.out.ProfessionOutputPort;
 import co.edu.javeriana.as.personapp.application.port.out.StudyOutputPort;
@@ -54,6 +55,7 @@ public class StudyUseCase implements StudyInputPort {
 
 	@Override
 	public Study create(Study study) throws AlreadyExistsException, NoExistException {
+		BusinessRules.validate(study);
 		log.debug("Into create on Application Domain");
 		validateReferences(study);
 		Integer professionId = study.getProfession().getIdentification();
@@ -66,6 +68,7 @@ public class StudyUseCase implements StudyInputPort {
 
 	@Override
 	public Study edit(Integer professionId, Integer personId, Study study) throws NoExistException {
+		BusinessRules.validate(study);
 		Study old = findOne(professionId, personId);
 		study.setPerson(old.getPerson());
 		study.setProfession(old.getProfession());

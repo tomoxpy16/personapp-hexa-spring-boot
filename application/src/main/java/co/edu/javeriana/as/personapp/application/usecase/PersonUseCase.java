@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import co.edu.javeriana.as.personapp.application.port.in.PersonInputPort;
+import co.edu.javeriana.as.personapp.application.rules.BusinessRules;
 import co.edu.javeriana.as.personapp.application.port.out.PersonOutputPort;
 import co.edu.javeriana.as.personapp.common.annotations.UseCase;
 import co.edu.javeriana.as.personapp.common.exceptions.AlreadyExistsException;
@@ -32,6 +33,7 @@ public class PersonUseCase implements PersonInputPort {
 
 	@Override
 	public Person create(Person person) throws AlreadyExistsException {
+		BusinessRules.validate(person);
 		log.debug("Into create on Application Domain");
 		if (personPersintence.findById(person.getIdentification()) != null)
 			throw new AlreadyExistsException(
@@ -41,6 +43,7 @@ public class PersonUseCase implements PersonInputPort {
 
 	@Override
 	public Person edit(Integer identification, Person person) throws NoExistException {
+		BusinessRules.validate(person);
 		Person oldPerson = personPersintence.findById(identification);
 		if (oldPerson != null)
 			return personPersintence.save(person);

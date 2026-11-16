@@ -53,10 +53,22 @@ Equivalencia con el patrón Controller–Service–Repository:
 | Service | `XInputAdapterRest` / `XInputAdapterCli` + `XUseCase` |
 | Repository | `XOutputAdapterMaria` / `XOutputAdapterMongo` + repositorios de Spring Data |
 
-Reglas de negocio de los casos de uso:
-- No se crean registros duplicados (HTTP 409).
-- El dueño de un teléfono, y la persona y la profesión de un estudio, deben existir (HTTP 404).
-- Al eliminar una persona o una profesión se eliminan en cascada sus teléfonos y estudios.
+### Reglas de negocio
+
+Las reglas viven en la capa de aplicación (`application/rules/BusinessRules` y los casos de uso), así que se
+cumplen igual por REST y por CLI y con MariaDB o MongoDB. Los límites salen del modelo de datos (DDL).
+
+| Entidad | Regla | Respuesta REST |
+|---|---|---|
+| Persona | Cédula mayor que 0; nombre y apellido obligatorios, de máximo 45 caracteres | 400 |
+| Persona | Género `M` o `F`; edad opcional, entre 0 y 150 | 400 |
+| Teléfono | Número de exactamente 10 dígitos; operador obligatorio, de máximo 45 caracteres | 400 |
+| Teléfono | El dueño debe existir | 404 |
+| Profesión | Id entre 1 y 999999 (`INT(6)`); nombre obligatorio, de máximo 90 caracteres | 400 |
+| Estudio | Fecha de grado no futura; universidad de máximo 50 caracteres | 400 |
+| Estudio | La persona y la profesión deben existir | 404 |
+| Todas | No se crean registros duplicados | 409 |
+| Persona / Profesión | Al eliminarlas se eliminan en cascada sus teléfonos y estudios | — |
 
 ### Cambios respecto a la plantilla
 
@@ -200,6 +212,13 @@ Ejecuta el CRUD completo de las 4 entidades en ambas bases de datos, incluidas l
 en cascada. El resultado esperado es `60 OK, 0 FAIL`. El script borra lo que crea, así que la base de datos
 queda como estaba.
 
+```bash
+bash scripts/test_reglas.sh
+```
+
+Envía 40 datos inválidos (20 por motor: edad negativa o de 500, cédula negativa, teléfonos de 5 o 14 dígitos
+o con letras, fechas futuras, textos demasiado largos, etc.). El resultado esperado es `Rechazados correctamente: 40 | Aceptados (falla de validacion): 0`.
+
 ## Endpoints
 
 `{database}` puede ser `MARIA` o `MONGO`. En POST y PUT la base de datos va en el campo `database` del body.
@@ -237,4 +256,5 @@ su comportamiento: con una base de datos inválida responden una lista vacía o 
 | `scripts/persona_ddl_mongo.js` | Usuario `persona_db` y colecciones |
 | `scripts/persona_dml_mongo.js` | Datos de ejemplo de las 4 colecciones |
 | `scripts/test_api.sh` | Prueba del CRUD completo contra la API |
+| `scripts/test_reglas.sh` | Prueba de las reglas de negocio con datos inválidos |
 | `docker-compose.yml` | MariaDB + MongoDB, con los scripts DDL y DML como inicialización |

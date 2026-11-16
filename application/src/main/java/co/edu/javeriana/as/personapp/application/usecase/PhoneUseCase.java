@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import co.edu.javeriana.as.personapp.application.port.in.PhoneInputPort;
+import co.edu.javeriana.as.personapp.application.rules.BusinessRules;
 import co.edu.javeriana.as.personapp.application.port.out.PersonOutputPort;
 import co.edu.javeriana.as.personapp.application.port.out.PhoneOutputPort;
 import co.edu.javeriana.as.personapp.common.annotations.UseCase;
@@ -43,6 +44,7 @@ public class PhoneUseCase implements PhoneInputPort {
 
 	@Override
 	public Phone create(Phone phone) throws AlreadyExistsException, NoExistException {
+		BusinessRules.validate(phone);
 		log.debug("Into create on Application Domain");
 		if (phonePersintence.findById(phone.getNumber()) != null)
 			throw new AlreadyExistsException(
@@ -53,6 +55,7 @@ public class PhoneUseCase implements PhoneInputPort {
 
 	@Override
 	public Phone edit(String number, Phone phone) throws NoExistException {
+		BusinessRules.validate(phone);
 		findOne(number);
 		phone.setNumber(number);
 		phone.setOwner(validateOwner(phone));
