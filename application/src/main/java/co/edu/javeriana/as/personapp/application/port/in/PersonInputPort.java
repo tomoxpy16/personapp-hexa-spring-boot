@@ -12,9 +12,9 @@ import co.edu.javeriana.as.personapp.domain.Study;
 
 @Port
 public interface PersonInputPort {
-
+	
 	public void setPersintence(PersonOutputPort personPersintence);
-
+	
 	public Person create(Person person) throws AlreadyExistsException;
 
 	public Person edit(Integer identification, Person person) throws NoExistException;

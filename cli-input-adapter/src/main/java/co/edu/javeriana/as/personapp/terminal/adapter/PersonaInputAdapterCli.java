@@ -1,5 +1,8 @@
 package co.edu.javeriana.as.personapp.terminal.adapter;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -38,7 +41,7 @@ public class PersonaInputAdapterCli {
 	@Autowired
 	private EstudioMapperCli estudioMapperCli;
 
-	private PersonInputPort personInputPort;
+	PersonInputPort personInputPort;
 
 	public void setPersonOutputPortInjection(String dbOption) throws InvalidOptionException {
 		if (dbOption.equalsIgnoreCase(DatabaseOption.MARIA.toString())) {
@@ -50,19 +53,27 @@ public class PersonaInputAdapterCli {
 		}
 	}
 
-	public void historial() {
+	public void historial1() {
 		log.info("Into historial PersonaEntity in Input Adapter");
-		personInputPort.findAll().stream().map(personaMapperCli::fromDomainToAdapterCli)
-				.forEach(System.out::println);
+		List<PersonaModelCli> persona = personInputPort.findAll().stream().map(personaMapperCli::fromDomainToAdapterCli)
+					.collect(Collectors.toList());
+		persona.forEach(p -> System.out.println(p.toString()));
 	}
+	public void historial() {
+	    log.info("Into historial PersonaEntity in Input Adapter");
+	    personInputPort.findAll().stream()
+	        .map(personaMapperCli::fromDomainToAdapterCli)
+	        .forEach(System.out::println);
+	}
+
 
 	public void buscar(Integer cc) throws NoExistException {
 		System.out.println(personaMapperCli.fromDomainToAdapterCli(personInputPort.findOne(cc)));
 	}
 
 	public void crear(PersonaModelCli model) throws AlreadyExistsException {
-		System.out.println("Creada: "
-				+ personaMapperCli.fromDomainToAdapterCli(personInputPort.create(personaMapperCli.fromAdapterCliToDomain(model))));
+		System.out.println("Creada: " + personaMapperCli
+				.fromDomainToAdapterCli(personInputPort.create(personaMapperCli.fromAdapterCliToDomain(model))));
 	}
 
 	public void editar(PersonaModelCli model) throws NoExistException {

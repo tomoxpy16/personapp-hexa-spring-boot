@@ -21,26 +21,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Adapter("personOutputAdapterMongo")
 public class PersonOutputAdapterMongo implements PersonOutputPort {
-
+	
 	@Autowired
-	private PersonaRepositoryMongo personaRepositoryMongo;
-
+    private PersonaRepositoryMongo personaRepositoryMongo;
+	
 	@Autowired
 	private PersonaMapperMongo personaMapperMongo;
 
 	@Autowired
 	private MongoTemplate mongoTemplate;
-
+	
 	@Override
 	public Person save(Person person) {
 		log.debug("Into save on Adapter MongoDB");
 		try {
 			PersonaDocument persistedPersona = personaRepositoryMongo.save(personaMapperMongo.fromDomainToAdapter(person));
-			return personaMapperMongo.fromAdapterToDomainShallow(persistedPersona);
+			return personaMapperMongo.fromAdapterToDomain(persistedPersona);
 		} catch (MongoWriteException e) {
 			log.warn(e.getMessage());
 			return person;
-		}
+		}		
 	}
 
 	@Override
@@ -63,8 +63,11 @@ public class PersonOutputAdapterMongo implements PersonOutputPort {
 	@Override
 	public Person findById(Integer identification) {
 		log.debug("Into findById on Adapter MongoDB");
-		return personaRepositoryMongo.findById(identification).map(personaMapperMongo::fromAdapterToDomain)
-				.orElse(null);
+		if (personaRepositoryMongo.findById(identification).isEmpty()) {
+			return null;
+		} else {
+			return personaMapperMongo.fromAdapterToDomain(personaRepositoryMongo.findById(identification).get());
+		}
 	}
 
 }

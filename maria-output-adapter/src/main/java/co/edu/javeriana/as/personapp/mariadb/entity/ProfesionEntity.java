@@ -7,6 +7,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
@@ -31,8 +32,8 @@ public class ProfesionEntity implements Serializable {
 	@Basic(optional = false)
 	@Column(nullable = false, length = 90)
 	private String nom;
-
-	@Column(columnDefinition = "TEXT")
+	@Lob
+	@Column(length = 65535)
 	private String des;
 	@OneToMany(cascade = CascadeType.ALL, mappedBy = "profesion")
 	private List<EstudiosEntity> estudios;

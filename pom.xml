@@ -10,7 +10,7 @@
 	<description>App Hexagonal (Clean Architecture) Multi Module PersonAPP</description>
 	<packaging>pom</packaging>
 	<properties>
-		<revision>1.0.0</revision>
+		<revision>0.0.1-SNAPSHOT</revision>
 		<global.java.version>21</global.java.version>
 		<maven.compiler.release>${global.java.version}</maven.compiler.release>
 		<java.version>${global.java.version}</java.version>
@@ -70,8 +70,8 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-to-slf4j</artifactId>
 		</dependency>
 	</dependencies>
 	<build>

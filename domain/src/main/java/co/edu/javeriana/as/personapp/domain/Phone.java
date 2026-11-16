@@ -2,7 +2,6 @@ package co.edu.javeriana.as.personapp.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
@@ -15,6 +14,5 @@ public class Phone {
 	@NonNull
 	private String company;
 	@NonNull
-	@EqualsAndHashCode.Exclude
 	private Person owner;
 }

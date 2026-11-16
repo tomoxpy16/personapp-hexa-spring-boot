@@ -4,7 +4,6 @@ import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,5 @@ public class Profession {
 	private String name;
 	private String description;
 	@ToString.Exclude
-	@EqualsAndHashCode.Exclude
 	private List<Study> studies;
 }

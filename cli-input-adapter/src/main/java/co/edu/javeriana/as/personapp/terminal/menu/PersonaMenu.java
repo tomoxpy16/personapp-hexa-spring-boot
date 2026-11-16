@@ -1,54 +1,145 @@
 package co.edu.javeriana.as.personapp.terminal.menu;
 
-import java.util.List;
+import java.util.InputMismatchException;
+import java.util.Scanner;
 
 import co.edu.javeriana.as.personapp.common.exceptions.InvalidOptionException;
 import co.edu.javeriana.as.personapp.terminal.adapter.PersonaInputAdapterCli;
 import co.edu.javeriana.as.personapp.terminal.model.PersonaModelCli;
+import lombok.extern.slf4j.Slf4j;
 
-public class PersonaMenu extends ModuloMenu {
+@Slf4j
+public class PersonaMenu {
 
-	private final PersonaInputAdapterCli adapter;
+	private static final int OPCION_REGRESAR_MODULOS = 0;
+	private static final int PERSISTENCIA_MARIADB = 1;
+	private static final int PERSISTENCIA_MONGODB = 2;
 
-	public PersonaMenu(PersonaInputAdapterCli adapter) {
-		this.adapter = adapter;
+	private static final int OPCION_REGRESAR_MOTOR_PERSISTENCIA = 0;
+	private static final int OPCION_VER_TODO = 1;
+	// mas opciones
+	private static final int OPCION_BUSCAR = 2;
+	private static final int OPCION_CREAR = 3;
+	private static final int OPCION_EDITAR = 4;
+	private static final int OPCION_ELIMINAR = 5;
+	private static final int OPCION_CONTAR = 6;
+	private static final int OPCION_VER_TELEFONOS = 7;
+	private static final int OPCION_VER_ESTUDIOS = 8;
+
+	public void iniciarMenu(PersonaInputAdapterCli personaInputAdapterCli, Scanner keyboard) {
+		boolean isValid = false;
+		do {
+			try {
+				mostrarMenuMotorPersistencia();
+				int opcion = leerOpcion(keyboard);
+				switch (opcion) {
+				case OPCION_REGRESAR_MODULOS:
+					isValid = true;
+					break;
+				case PERSISTENCIA_MARIADB:
+					personaInputAdapterCli.setPersonOutputPortInjection("MARIA");
+					menuOpciones(personaInputAdapterCli,keyboard);
+					break;
+				case PERSISTENCIA_MONGODB:
+					personaInputAdapterCli.setPersonOutputPortInjection("MONGO");
+					menuOpciones(personaInputAdapterCli,keyboard);
+					break;
+				default:
+					log.warn("La opción elegida no es válida.");
+				}
+			}  catch (InvalidOptionException e) {
+				log.warn(e.getMessage());
+			}
+		} while (!isValid);
 	}
 
-	@Override
-	protected String nombreModulo() {
-		return "Personas";
+	private void menuOpciones(PersonaInputAdapterCli personaInputAdapterCli, Scanner keyboard) {
+		boolean isValid = false;
+		do {
+			try {
+				mostrarMenuOpciones();
+				int opcion = leerOpcion(keyboard);
+				switch (opcion) {
+				case OPCION_REGRESAR_MOTOR_PERSISTENCIA:
+					isValid = true;
+					break;
+				case OPCION_VER_TODO:
+					personaInputAdapterCli.historial();					
+					break;
+				// mas opciones
+				case OPCION_BUSCAR:
+					personaInputAdapterCli.buscar(datos(keyboard).readInt("Cedula: "));
+					break;
+				case OPCION_CREAR:
+					personaInputAdapterCli.crear(leerPersona(datos(keyboard), "Cedula: "));
+					break;
+				case OPCION_EDITAR:
+					personaInputAdapterCli.editar(leerPersona(datos(keyboard), "Cedula de la persona a editar: "));
+					break;
+				case OPCION_ELIMINAR:
+					personaInputAdapterCli.eliminar(datos(keyboard).readInt("Cedula: "));
+					break;
+				case OPCION_CONTAR:
+					personaInputAdapterCli.contar();
+					break;
+				case OPCION_VER_TELEFONOS:
+					personaInputAdapterCli.telefonos(datos(keyboard).readInt("Cedula: "));
+					break;
+				case OPCION_VER_ESTUDIOS:
+					personaInputAdapterCli.estudios(datos(keyboard).readInt("Cedula: "));
+					break;
+				default:
+					log.warn("La opción elegida no es válida.");
+				}
+			} catch (InputMismatchException e) {
+				log.warn("Solo se permiten números.");
+			} catch (Exception e) {
+				log.warn(e.getMessage());
+			}
+		} while (!isValid);
 	}
 
-	@Override
-	protected void seleccionarMotor(String dbOption) throws InvalidOptionException {
-		adapter.setPersonOutputPortInjection(dbOption);
+	private void mostrarMenuOpciones() {
+		System.out.println("----------------------");
+		System.out.println(OPCION_VER_TODO + " para ver todas las personas");
+		// implementar otras opciones
+		System.out.println(OPCION_BUSCAR + " para buscar una persona");
+		System.out.println(OPCION_CREAR + " para crear una persona");
+		System.out.println(OPCION_EDITAR + " para editar una persona");
+		System.out.println(OPCION_ELIMINAR + " para eliminar una persona");
+		System.out.println(OPCION_CONTAR + " para contar las personas");
+		System.out.println(OPCION_VER_TELEFONOS + " para ver los telefonos de una persona");
+		System.out.println(OPCION_VER_ESTUDIOS + " para ver los estudios de una persona");
+		System.out.println(OPCION_REGRESAR_MOTOR_PERSISTENCIA + " para regresar");
 	}
 
-	@Override
-	protected List<String> opciones() {
-		return List.of("ver todas las personas", "buscar una persona", "crear una persona", "editar una persona",
-				"eliminar una persona", "contar personas", "ver telefonos de una persona",
-				"ver estudios de una persona");
+	private void mostrarMenuMotorPersistencia() {
+		System.out.println("----------------------");
+		System.out.println(PERSISTENCIA_MARIADB + " para MariaDB");
+		System.out.println(PERSISTENCIA_MONGODB + " para MongoDB");
+		System.out.println(OPCION_REGRESAR_MODULOS + " para regresar");
 	}
 
-	@Override
-	protected void ejecutar(int opcion, CliInput in) throws Exception {
-		switch (opcion) {
-		case 1 -> adapter.historial();
-		case 2 -> adapter.buscar(in.readInt("Cedula: "));
-		case 3 -> adapter.crear(leerPersona(in, in.readInt("Cedula: ")));
-		case 4 -> adapter.editar(leerPersona(in, in.readInt("Cedula de la persona a editar: ")));
-		case 5 -> adapter.eliminar(in.readInt("Cedula: "));
-		case 6 -> adapter.contar();
-		case 7 -> adapter.telefonos(in.readInt("Cedula: "));
-		case 8 -> adapter.estudios(in.readInt("Cedula: "));
-		default -> System.out.println("La opcion elegida no es valida.");
+	private int leerOpcion(Scanner keyboard) {
+		try {
+			System.out.print("Ingrese una opción: ");
+			return keyboard.nextInt();
+		} catch (InputMismatchException e) {
+			log.warn("Solo se permiten números.");
+			return leerOpcion(keyboard);
 		}
 	}
 
-	private PersonaModelCli leerPersona(CliInput in, int cc) {
+
+	/** Lector de datos por lineas; descarta el fin de linea que deja nextInt() en leerOpcion. */
+	private CliInput datos(Scanner keyboard) {
+		keyboard.nextLine();
+		return new CliInput(keyboard);
+	}
+
+	private PersonaModelCli leerPersona(CliInput in, String promptCedula) {
 		PersonaModelCli model = new PersonaModelCli();
-		model.setCc(cc);
+		model.setCc(in.readInt(promptCedula));
 		model.setNombre(in.readRequired("Nombre: "));
 		model.setApellido(in.readRequired("Apellido: "));
 		model.setGenero(in.readRequired("Genero (M/F): "));

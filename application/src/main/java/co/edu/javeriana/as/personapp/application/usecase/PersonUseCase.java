@@ -18,15 +18,16 @@ import lombok.extern.slf4j.Slf4j;
 @UseCase
 public class PersonUseCase implements PersonInputPort {
 
+	
 	private PersonOutputPort personPersintence;
-
+	
 	public PersonUseCase(@Qualifier("personOutputAdapterMaria") PersonOutputPort personPersintence) {
-		this.personPersintence = personPersintence;
+		this.personPersintence=personPersintence;
 	}
-
+	
 	@Override
 	public void setPersintence(PersonOutputPort personPersintence) {
-		this.personPersintence = personPersintence;
+		this.personPersintence=personPersintence;
 	}
 
 	@Override
@@ -40,15 +41,20 @@ public class PersonUseCase implements PersonInputPort {
 
 	@Override
 	public Person edit(Integer identification, Person person) throws NoExistException {
-		findOne(identification);
-		person.setIdentification(identification);
-		return personPersintence.save(person);
+		Person oldPerson = personPersintence.findById(identification);
+		if (oldPerson != null)
+			return personPersintence.save(person);
+		throw new NoExistException(
+				"The person with id " + identification + " does not exist into db, cannot be edited");
 	}
 
 	@Override
 	public Boolean drop(Integer identification) throws NoExistException {
-		findOne(identification);
-		return personPersintence.delete(identification);
+		Person oldPerson = personPersintence.findById(identification);
+		if (oldPerson != null)
+			return personPersintence.delete(identification);
+		throw new NoExistException(
+				"The person with id " + identification + " does not exist into db, cannot be dropped");
 	}
 
 	@Override
@@ -59,10 +65,10 @@ public class PersonUseCase implements PersonInputPort {
 
 	@Override
 	public Person findOne(Integer identification) throws NoExistException {
-		Person person = personPersintence.findById(identification);
-		if (person != null)
-			return person;
-		throw new NoExistException("The person with id " + identification + " does not exist into db");
+		Person oldPerson = personPersintence.findById(identification);
+		if (oldPerson != null)
+			return oldPerson;
+		throw new NoExistException("The person with id " + identification + " does not exist into db, cannot be found");
 	}
 
 	@Override
@@ -72,11 +78,19 @@ public class PersonUseCase implements PersonInputPort {
 
 	@Override
 	public List<Phone> getPhones(Integer identification) throws NoExistException {
-		return findOne(identification).getPhoneNumbers();
+		Person oldPerson = personPersintence.findById(identification);
+		if (oldPerson != null)
+			return oldPerson.getPhoneNumbers();
+		throw new NoExistException(
+				"The person with id " + identification + " does not exist into db, cannot be getting phones");
 	}
 
 	@Override
 	public List<Study> getStudies(Integer identification) throws NoExistException {
-		return findOne(identification).getStudies();
+		Person oldPerson = personPersintence.findById(identification);
+		if (oldPerson != null)
+			return oldPerson.getStudies();
+		throw new NoExistException(
+				"The person with id " + identification + " does not exist into db, cannot be getting studies");
 	}
 }

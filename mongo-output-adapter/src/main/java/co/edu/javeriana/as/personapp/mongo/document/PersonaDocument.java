@@ -8,8 +8,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,13 +22,9 @@ public class PersonaDocument {
 	private String apellido;
 	private String genero;
 	private Integer edad;
-	@ToString.Exclude
-	@EqualsAndHashCode.Exclude
 	@DocumentReference(lazy = true, lookup = "{ 'primaryDuenio' : ?#{#self._id} }")
 	@ReadOnlyProperty
 	private List<TelefonoDocument> telefonos;
-	@ToString.Exclude
-	@EqualsAndHashCode.Exclude
 	@DocumentReference(lazy = true, lookup = "{ 'primaryPersona' : ?#{#self._id} }")
 	@ReadOnlyProperty
 	private List<EstudiosDocument> estudios;

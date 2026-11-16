@@ -14,15 +14,8 @@ import co.edu.javeriana.as.personapp.domain.Study;
 import co.edu.javeriana.as.personapp.mariadb.entity.EstudiosEntity;
 import co.edu.javeriana.as.personapp.mariadb.entity.PersonaEntity;
 import co.edu.javeriana.as.personapp.mariadb.entity.TelefonoEntity;
+import lombok.NonNull;
 
-/**
- * Mapper PersonaEntity (adapter MariaDB) <-> Person (dominio).
- *
- * CORRECCION: en la plantilla se mapeaba Persona -> Estudio -> Persona -> ...
- * de forma recursiva (StackOverflowError). Ahora las relaciones hijas
- * (telefonos, estudios) se mapean con referencias "shallow" (solo atributos
- * propios, sin colecciones), lo que corta el ciclo.
- */
 @Mapper
 public class PersonaMapperMaria {
 
@@ -32,29 +25,19 @@ public class PersonaMapperMaria {
 	@Autowired
 	private TelefonoMapperMaria telefonoMapperMaria;
 
-	/**
-	 * Domain -> Adapter. Solo atributos propios: los telefonos y estudios se
-	 * persisten desde sus propios adaptadores.
-	 */
 	public PersonaEntity fromDomainToAdapter(Person person) {
-		PersonaEntity personaEntity = fromDomainToAdapterShallow(person);
-		personaEntity.setEstudios(new ArrayList<EstudiosEntity>());
-		personaEntity.setTelefonos(new ArrayList<TelefonoEntity>());
-		return personaEntity;
-	}
-
-	/** Domain -> Adapter sin relaciones (para usar como referencia). */
-	public PersonaEntity fromDomainToAdapterShallow(Person person) {
 		PersonaEntity personaEntity = new PersonaEntity();
 		personaEntity.setCc(person.getIdentification());
 		personaEntity.setNombre(person.getFirstName());
 		personaEntity.setApellido(person.getLastName());
 		personaEntity.setGenero(validateGenero(person.getGender()));
 		personaEntity.setEdad(validateEdad(person.getAge()));
+		personaEntity.setEstudios(validateEstudios(person.getStudies()));
+		personaEntity.setTelefonos(validateTelefonos(person.getPhoneNumbers()));
 		return personaEntity;
 	}
 
-	private Character validateGenero(Gender gender) {
+	private Character validateGenero(@NonNull Gender gender) {
 		return gender == Gender.FEMALE ? 'F' : gender == Gender.MALE ? 'M' : ' ';
 	}
 
@@ -62,28 +45,31 @@ public class PersonaMapperMaria {
 		return age != null && age >= 0 ? age : null;
 	}
 
-	/** Adapter -> Domain completo (con telefonos y estudios). */
-	public Person fromAdapterToDomain(PersonaEntity personaEntity) {
-		Person person = fromAdapterToDomainShallow(personaEntity);
-		person.setStudies(validateStudies(personaEntity.getEstudios()));
-		person.setPhoneNumbers(validatePhones(personaEntity.getTelefonos()));
-		return person;
+	private List<EstudiosEntity> validateEstudios(List<Study> studies) {
+		return studies != null && !studies.isEmpty()
+				? studies.stream().map(study -> estudiosMapperMaria.fromDomainToAdapter(study)).collect(Collectors.toList())
+				: new ArrayList<EstudiosEntity>();
 	}
 
-	/** Adapter -> Domain sin relaciones (corta la recursion). */
-	public Person fromAdapterToDomainShallow(PersonaEntity personaEntity) {
+	private List<TelefonoEntity> validateTelefonos(List<Phone> phoneNumbers) {
+		return phoneNumbers != null && !phoneNumbers.isEmpty() ? phoneNumbers.stream()
+				.map(phone -> telefonoMapperMaria.fromDomainToAdapter(phone)).collect(Collectors.toList())
+				: new ArrayList<TelefonoEntity>();
+	}
+
+	public Person fromAdapterToDomain(PersonaEntity personaEntity) {
 		Person person = new Person();
 		person.setIdentification(personaEntity.getCc());
 		person.setFirstName(personaEntity.getNombre());
 		person.setLastName(personaEntity.getApellido());
 		person.setGender(validateGender(personaEntity.getGenero()));
 		person.setAge(validateAge(personaEntity.getEdad()));
+		person.setStudies(validateStudies(personaEntity.getEstudios()));
+		person.setPhoneNumbers(validatePhones(personaEntity.getTelefonos()));
 		return person;
 	}
 
-	private Gender validateGender(Character genero) {
-		if (genero == null)
-			return Gender.OTHER;
+	private @NonNull Gender validateGender(Character genero) {
 		return genero == 'F' ? Gender.FEMALE : genero == 'M' ? Gender.MALE : Gender.OTHER;
 	}
 
@@ -92,14 +78,29 @@ public class PersonaMapperMaria {
 	}
 
 	private List<Study> validateStudies(List<EstudiosEntity> estudiosEntity) {
-		return estudiosEntity != null && !estudiosEntity.isEmpty()
-				? estudiosEntity.stream().map(estudiosMapperMaria::fromAdapterToDomain).collect(Collectors.toList())
+		return estudiosEntity != null && !estudiosEntity.isEmpty() ? estudiosEntity.stream()
+				.map(estudio -> estudiosMapperMaria.fromAdapterToDomain(estudio)).collect(Collectors.toList())
 				: new ArrayList<Study>();
 	}
 
 	private List<Phone> validatePhones(List<TelefonoEntity> telefonoEntities) {
-		return telefonoEntities != null && !telefonoEntities.isEmpty()
-				? telefonoEntities.stream().map(telefonoMapperMaria::fromAdapterToDomain).collect(Collectors.toList())
+		return telefonoEntities != null && !telefonoEntities.isEmpty() ? telefonoEntities.stream()
+				.map(telefono -> telefonoMapperMaria.fromAdapterToDomain(telefono)).collect(Collectors.toList())
 				: new ArrayList<Phone>();
+	}
+
+	/**
+	 * CORRECCION DEL MAPPER: version sin relaciones (telefonos/estudios). Las
+	 * relaciones hijas la usan para referenciar a la persona y asi cortar la
+	 * recursion Persona -> Estudio -> Persona -> ... (StackOverflowError).
+	 */
+	public Person fromAdapterToDomainShallow(PersonaEntity personaEntity) {
+		Person person = new Person();
+		person.setIdentification(personaEntity.getCc());
+		person.setFirstName(personaEntity.getNombre());
+		person.setLastName(personaEntity.getApellido());
+		person.setGender(validateGender(personaEntity.getGenero()));
+		person.setAge(validateAge(personaEntity.getEdad()));
+		return person;
 	}
 }

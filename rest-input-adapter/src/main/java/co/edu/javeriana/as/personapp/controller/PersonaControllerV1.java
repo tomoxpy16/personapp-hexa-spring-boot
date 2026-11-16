@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.javeriana.as.personapp.adapter.PersonaInputAdapterRest;
@@ -25,71 +24,66 @@ import co.edu.javeriana.as.personapp.model.response.EstudioResponse;
 import co.edu.javeriana.as.personapp.model.response.PersonaResponse;
 import co.edu.javeriana.as.personapp.model.response.Response;
 import co.edu.javeriana.as.personapp.model.response.TelefonoResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@Tag(name = "Persona", description = "CRUD de personas. {database} = MARIA | MONGO")
-@RequestMapping(path = "/api/v1/persona", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping("/api/v1/persona")
 public class PersonaControllerV1 {
-
+	
 	@Autowired
 	private PersonaInputAdapterRest personaInputAdapterRest;
-
-	@Operation(summary = "Listar personas")
-	@GetMapping("/{database}")
-	public List<PersonaResponse> personas(@PathVariable String database) throws InvalidOptionException {
+	
+	@ResponseBody
+	@GetMapping(path = "/{database}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public List<PersonaResponse> personas(@PathVariable String database) {
 		log.info("Into personas REST API");
-		return personaInputAdapterRest.historial(database);
+			return personaInputAdapterRest.historial(database.toUpperCase());
+	}
+	
+	@ResponseBody
+	@PostMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public PersonaResponse crearPersona(@RequestBody PersonaRequest request) throws AlreadyExistsException {
+		log.info("esta en el metodo crearTarea en el controller del api");
+		return personaInputAdapterRest.crearPersona(request);
 	}
 
-	@Operation(summary = "Contar personas")
-	@GetMapping("/{database}/count")
+	@ResponseBody
+	@GetMapping(path = "/{database}/count", produces = MediaType.APPLICATION_JSON_VALUE)
 	public Integer contar(@PathVariable String database) throws InvalidOptionException {
 		return personaInputAdapterRest.contarPersonas(database);
 	}
 
-	@Operation(summary = "Buscar persona por cedula")
-	@GetMapping("/{database}/{cc}")
+	@ResponseBody
+	@GetMapping(path = "/{database}/{cc}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public PersonaResponse persona(@PathVariable String database, @PathVariable Integer cc)
 			throws InvalidOptionException, NoExistException {
 		return personaInputAdapterRest.buscarPersona(database, cc);
 	}
 
-	@Operation(summary = "Telefonos de una persona")
-	@GetMapping("/{database}/{cc}/telefonos")
+	@ResponseBody
+	@GetMapping(path = "/{database}/{cc}/telefonos", produces = MediaType.APPLICATION_JSON_VALUE)
 	public List<TelefonoResponse> telefonos(@PathVariable String database, @PathVariable Integer cc)
 			throws InvalidOptionException, NoExistException {
 		return personaInputAdapterRest.telefonosPersona(database, cc);
 	}
 
-	@Operation(summary = "Estudios de una persona")
-	@GetMapping("/{database}/{cc}/estudios")
+	@ResponseBody
+	@GetMapping(path = "/{database}/{cc}/estudios", produces = MediaType.APPLICATION_JSON_VALUE)
 	public List<EstudioResponse> estudios(@PathVariable String database, @PathVariable Integer cc)
 			throws InvalidOptionException, NoExistException {
 		return personaInputAdapterRest.estudiosPersona(database, cc);
 	}
 
-	@Operation(summary = "Crear persona (database va en el body)")
-	@ResponseStatus(HttpStatus.CREATED)
-	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-	public PersonaResponse crearPersona(@RequestBody PersonaRequest request)
-			throws InvalidOptionException, AlreadyExistsException {
-		log.info("Into crearPersona REST API");
-		return personaInputAdapterRest.crearPersona(request);
-	}
-
-	@Operation(summary = "Editar persona (database va en el body)")
-	@PutMapping(path = "/{cc}", consumes = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	@PutMapping(path = "/{cc}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public PersonaResponse editarPersona(@PathVariable Integer cc, @RequestBody PersonaRequest request)
 			throws InvalidOptionException, NoExistException {
 		return personaInputAdapterRest.editarPersona(cc, request);
 	}
 
-	@Operation(summary = "Eliminar persona (y en cascada sus telefonos y estudios)")
-	@DeleteMapping("/{database}/{cc}")
+	@ResponseBody
+	@DeleteMapping(path = "/{database}/{cc}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public Response eliminarPersona(@PathVariable String database, @PathVariable Integer cc)
 			throws InvalidOptionException, NoExistException {
 		Boolean ok = personaInputAdapterRest.eliminarPersona(database, cc);
