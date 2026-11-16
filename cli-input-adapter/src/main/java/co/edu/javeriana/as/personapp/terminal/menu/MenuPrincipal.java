@@ -5,7 +5,9 @@ import java.util.Scanner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
+import co.edu.javeriana.as.personapp.terminal.adapter.EstudioInputAdapterCli;
 import co.edu.javeriana.as.personapp.terminal.adapter.PersonaInputAdapterCli;
+import co.edu.javeriana.as.personapp.terminal.adapter.ProfesionInputAdapterCli;
 import co.edu.javeriana.as.personapp.terminal.adapter.TelefonoInputAdapterCli;
 
 @Controller
@@ -15,7 +17,11 @@ public class MenuPrincipal {
 	@Autowired
 	private PersonaInputAdapterCli personaInputAdapterCli;
 	@Autowired
+	private ProfesionInputAdapterCli profesionInputAdapterCli;
+	@Autowired
 	private TelefonoInputAdapterCli telefonoInputAdapterCli;
+	@Autowired
+	private EstudioInputAdapterCli estudioInputAdapterCli;
 
 	private static final int SALIR = 0;
 	private static final int MODULO_PERSONA = 1;
@@ -27,7 +33,9 @@ public class MenuPrincipal {
 		Scanner keyboard = new Scanner(System.in);
 		CliInput input = new CliInput(keyboard);
 		PersonaMenu personaMenu = new PersonaMenu(personaInputAdapterCli);
+		ProfesionMenu profesionMenu = new ProfesionMenu(profesionInputAdapterCli);
 		TelefonoMenu telefonoMenu = new TelefonoMenu(telefonoInputAdapterCli);
+		EstudioMenu estudioMenu = new EstudioMenu(estudioInputAdapterCli);
 
 		boolean salir = false;
 		do {
@@ -36,8 +44,9 @@ public class MenuPrincipal {
 			switch (opcion) {
 			case SALIR -> salir = true;
 			case MODULO_PERSONA -> personaMenu.iniciarMenu(input);
-			case MODULO_PROFESION, MODULO_ESTUDIO -> System.out.println("Modulo en construccion");
+			case MODULO_PROFESION -> profesionMenu.iniciarMenu(input);
 			case MODULO_TELEFONO -> telefonoMenu.iniciarMenu(input);
+			case MODULO_ESTUDIO -> estudioMenu.iniciarMenu(input);
 			default -> System.out.println("La opcion elegida no es valida.");
 			}
 		} while (!salir);

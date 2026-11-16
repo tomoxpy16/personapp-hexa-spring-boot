@@ -11,6 +11,7 @@ import co.edu.javeriana.as.personapp.common.exceptions.AlreadyExistsException;
 import co.edu.javeriana.as.personapp.common.exceptions.InvalidOptionException;
 import co.edu.javeriana.as.personapp.common.exceptions.NoExistException;
 import co.edu.javeriana.as.personapp.common.setup.DatabaseOption;
+import co.edu.javeriana.as.personapp.terminal.mapper.EstudioMapperCli;
 import co.edu.javeriana.as.personapp.terminal.mapper.PersonaMapperCli;
 import co.edu.javeriana.as.personapp.terminal.mapper.TelefonoMapperCli;
 import co.edu.javeriana.as.personapp.terminal.model.PersonaModelCli;
@@ -33,6 +34,9 @@ public class PersonaInputAdapterCli {
 
 	@Autowired
 	private TelefonoMapperCli telefonoMapperCli;
+
+	@Autowired
+	private EstudioMapperCli estudioMapperCli;
 
 	private PersonInputPort personInputPort;
 
@@ -79,4 +83,8 @@ public class PersonaInputAdapterCli {
 				.forEach(System.out::println);
 	}
 
+	public void estudios(Integer cc) throws NoExistException {
+		personInputPort.getStudies(cc).stream().map(estudioMapperCli::fromDomainToAdapterCli)
+				.forEach(System.out::println);
+	}
 }

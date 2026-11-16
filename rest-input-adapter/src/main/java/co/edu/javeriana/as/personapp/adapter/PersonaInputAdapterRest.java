@@ -14,9 +14,11 @@ import co.edu.javeriana.as.personapp.common.exceptions.AlreadyExistsException;
 import co.edu.javeriana.as.personapp.common.exceptions.InvalidOptionException;
 import co.edu.javeriana.as.personapp.common.exceptions.NoExistException;
 import co.edu.javeriana.as.personapp.common.setup.DatabaseOption;
+import co.edu.javeriana.as.personapp.mapper.EstudioMapperRest;
 import co.edu.javeriana.as.personapp.mapper.PersonaMapperRest;
 import co.edu.javeriana.as.personapp.mapper.TelefonoMapperRest;
 import co.edu.javeriana.as.personapp.model.request.PersonaRequest;
+import co.edu.javeriana.as.personapp.model.response.EstudioResponse;
 import co.edu.javeriana.as.personapp.model.response.PersonaResponse;
 import co.edu.javeriana.as.personapp.model.response.TelefonoResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,9 @@ public class PersonaInputAdapterRest {
 
 	@Autowired
 	private TelefonoMapperRest telefonoMapperRest;
+
+	@Autowired
+	private EstudioMapperRest estudioMapperRest;
 
 	/** Se crea un caso de uso por peticion: evita estado compartido entre hilos. */
 	private PersonInputPort useCase(DatabaseOption option) {
@@ -89,6 +94,14 @@ public class PersonaInputAdapterRest {
 		DatabaseOption option = DatabaseSelector.parse(database);
 		String label = DatabaseSelector.label(option);
 		return useCase(option).getPhones(cc).stream().map(t -> telefonoMapperRest.fromDomainToAdapterRest(t, label))
+				.collect(Collectors.toList());
+	}
+
+	public List<EstudioResponse> estudiosPersona(String database, Integer cc)
+			throws InvalidOptionException, NoExistException {
+		DatabaseOption option = DatabaseSelector.parse(database);
+		String label = DatabaseSelector.label(option);
+		return useCase(option).getStudies(cc).stream().map(e -> estudioMapperRest.fromDomainToAdapterRest(e, label))
 				.collect(Collectors.toList());
 	}
 
