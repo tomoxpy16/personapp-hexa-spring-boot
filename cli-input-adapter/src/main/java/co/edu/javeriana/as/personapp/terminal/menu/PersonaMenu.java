@@ -27,7 +27,8 @@ public class PersonaMenu extends ModuloMenu {
 	@Override
 	protected List<String> opciones() {
 		return List.of("ver todas las personas", "buscar una persona", "crear una persona", "editar una persona",
-				"eliminar una persona", "contar personas", "ver telefonos de una persona");
+				"eliminar una persona", "contar personas", "ver telefonos de una persona",
+				"ver estudios de una persona");
 	}
 
 	@Override
@@ -40,6 +41,7 @@ public class PersonaMenu extends ModuloMenu {
 		case 5 -> adapter.eliminar(in.readInt("Cedula: "));
 		case 6 -> adapter.contar();
 		case 7 -> adapter.telefonos(in.readInt("Cedula: "));
+		case 8 -> adapter.estudios(in.readInt("Cedula: "));
 		default -> System.out.println("La opcion elegida no es valida.");
 		}
 	}
