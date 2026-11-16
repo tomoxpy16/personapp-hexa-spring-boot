@@ -21,6 +21,7 @@ import co.edu.javeriana.as.personapp.common.exceptions.AlreadyExistsException;
 import co.edu.javeriana.as.personapp.common.exceptions.InvalidOptionException;
 import co.edu.javeriana.as.personapp.common.exceptions.NoExistException;
 import co.edu.javeriana.as.personapp.model.request.PersonaRequest;
+import co.edu.javeriana.as.personapp.model.response.EstudioResponse;
 import co.edu.javeriana.as.personapp.model.response.PersonaResponse;
 import co.edu.javeriana.as.personapp.model.response.Response;
 import co.edu.javeriana.as.personapp.model.response.TelefonoResponse;
@@ -62,6 +63,13 @@ public class PersonaControllerV1 {
 	public List<TelefonoResponse> telefonos(@PathVariable String database, @PathVariable Integer cc)
 			throws InvalidOptionException, NoExistException {
 		return personaInputAdapterRest.telefonosPersona(database, cc);
+	}
+
+	@Operation(summary = "Estudios de una persona")
+	@GetMapping("/{database}/{cc}/estudios")
+	public List<EstudioResponse> estudios(@PathVariable String database, @PathVariable Integer cc)
+			throws InvalidOptionException, NoExistException {
+		return personaInputAdapterRest.estudiosPersona(database, cc);
 	}
 
 	@Operation(summary = "Crear persona (database va en el body)")
