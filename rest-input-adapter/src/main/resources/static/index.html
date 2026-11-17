@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PersonApp · Hexagonal</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --mut:#6b7280; --line:#e3e6eb; --pri:#2f5bea; --ok:#15803d; --err:#b91c1c; --maria:#c0765a; --mongo:#3f8f4e; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--ink); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+  header h1 { font-size:17px; margin:0; font-weight:600; }
+  header small { color:#9aa3b2; }
+  .db { margin-left:auto; display:flex; background:#2c3444; border-radius:8px; padding:3px; }
+  .db button { border:0; background:none; color:#cbd2dd; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:600; }
+  .db button.on[data-db=MARIA] { background:var(--maria); color:#fff; }
+  .db button.on[data-db=MONGO] { background:var(--mongo); color:#fff; }
+  nav { display:flex; gap:4px; padding:0 24px; background:#fff; border-bottom:1px solid var(--line); }
+  nav button { border:0; background:none; padding:12px 16px; cursor:pointer; color:var(--mut); font-weight:600; border-bottom:2px solid transparent; }
+  nav button.on { color:var(--pri); border-color:var(--pri); }
+  main { max-width:1150px; margin:20px auto; padding:0 24px; display:grid; grid-template-columns:330px 1fr; gap:20px; }
+  @media (max-width:850px){ main { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; }
+  .card h2 { font-size:15px; margin:0 0 14px; }
+  label { display:block; font-size:12px; color:var(--mut); margin:10px 0 4px; }
+  input, select { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font:inherit; }
+  input:disabled { background:#f1f3f6; color:var(--mut); }
+  .row { display:flex; gap:8px; margin-top:16px; }
+  .btn { border:1px solid var(--line); background:#fff; padding:8px 14px; border-radius:6px; cursor:pointer; font:inherit; font-weight:600; }
+  .btn.pri { background:var(--pri); color:#fff; border-color:var(--pri); }
+  .btn.sm { padding:4px 9px; font-size:12px; }
+  .btn.del { color:var(--err); }
+  .top { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .top h2 { margin:0; }
+  .count { background:#eef1f6; color:var(--mut); padding:2px 9px; border-radius:20px; font-size:12px; font-weight:600; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:8px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:12px; color:var(--mut); font-weight:600; }
+  td.act { white-space:nowrap; text-align:right; }
+  .empty { color:var(--mut); padding:24px 0; text-align:center; }
+  #log { margin-top:16px; font:12px/1.5 ui-monospace, Menlo, monospace; background:#0f1420; color:#cfd6e4; border-radius:8px; padding:10px 12px; max-height:180px; overflow:auto; white-space:pre-wrap; }
+  #log .ok { color:#6ee7a1; } #log .err { color:#fca5a5; }
+  #toast { position:fixed; right:20px; bottom:20px; padding:12px 16px; border-radius:8px; color:#fff; font-weight:600; opacity:0; transition:opacity .2s; max-width:420px; }
+  #toast.show { opacity:1; }
+  .sub { margin-top:16px; padding-top:12px; border-top:1px dashed var(--line); }
+  .sub h3 { font-size:13px; margin:0 0 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PersonApp <small>· Arquitectura hexagonal · Grupo 2</small></h1>
+  <div class="db" id="db">
+    <button data-db="MARIA" class="on">MariaDB</button>
+    <button data-db="MONGO">MongoDB</button>
+  </div>
+</header>
+<nav id="tabs"></nav>
+<main>
+  <section class="card">
+    <h2 id="formTitle"></h2>
+    <form id="form"></form>
+  </section>
+  <section class="card">
+    <div class="top"><h2 id="listTitle"></h2><span class="count" id="count"></span>
+      <button class="btn sm" style="margin-left:auto" id="reload">Recargar</button></div>
+    <div id="list"></div>
+    <div id="detail"></div>
+    <div id="log"></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const API = '/api/v1';
+const SEX = { MALE: 'M', FEMALE: 'F', M: 'M', F: 'F' };
+
+// Cada entidad: ruta, campos del formulario, columnas y como se arma su llave en la URL.
+const ENT = {
+  persona: {
+    title: 'Personas', one: 'persona', nuevo: 'Nueva',
+    fields: [
+      { k: 'dni', l: 'Cédula', key: true },
+      { k: 'firstName', l: 'Nombre' },
+      { k: 'lastName', l: 'Apellido' },
+      { k: 'age', l: 'Edad' },
+      { k: 'sex', l: 'Género', opts: [['M', 'Masculino'], ['F', 'Femenino']] },
+    ],
+    cols: [['dni', 'Cédula'], ['firstName', 'Nombre'], ['lastName', 'Apellido'], ['age', 'Edad'], ['sex', 'Género']],
+    key: r => r.dni,
+    extra: [['Teléfonos', 'telefonos', [['number','Número'], ['company','Operador']]], ['Estudios', 'estudios', [['professionId','Profesión'], ['universityName','Universidad'], ['graduationDate','Grado']]]],
+  },
+  profesion: {
+    title: 'Profesiones', one: 'profesión', nuevo: 'Nueva',
+    fields: [{ k: 'id', l: 'Id', key: true }, { k: 'name', l: 'Nombre' }, { k: 'description', l: 'Descripción' }],
+    cols: [['id', 'Id'], ['name', 'Nombre'], ['description', 'Descripción']],
+    key: r => r.id,
+    extra: [['Estudios', 'estudios', [['personId','Persona'], ['universityName','Universidad'], ['graduationDate','Grado']]]],
+  },
+  telefono: {
+    title: 'Teléfonos', one: 'teléfono',
+    fields: [{ k: 'number', l: 'Número (10 dígitos)', key: true }, { k: 'company', l: 'Operador' }, { k: 'ownerId', l: 'Cédula del dueño' }],
+    cols: [['number', 'Número'], ['company', 'Operador'], ['ownerId', 'Dueño']],
+    key: r => r.number,
+  },
+  estudio: {
+    title: 'Estudios', one: 'estudio',
+    fields: [
+      { k: 'professionId', l: 'Id profesión', key: true },
+      { k: 'personId', l: 'Cédula persona', key: true },
+      { k: 'graduationDate', l: 'Fecha de grado', type: 'date' },
+      { k: 'universityName', l: 'Universidad' },
+    ],
+    cols: [['professionId', 'Profesión'], ['personId', 'Persona'], ['graduationDate', 'Grado'], ['universityName', 'Universidad']],
+    key: r => r.professionId + '/' + r.personId,   // llave compuesta en la ruta
+  },
+};
+
+let db = 'MARIA', ent = 'persona', editing = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function log(method, url, code, body) {
+  const ok = code >= 200 && code < 300;
+  const msg = !ok && body && body.description ? ' · ' + body.description : '';
+  $('log').insertAdjacentHTML('afterbegin', `<div class="${ok ? 'ok' : 'err'}">${method} ${esc(url)} → ${code}${esc(msg)}</div>`);
+}
+function toast(text, ok) {
+  const t = $('toast'); t.textContent = text; t.style.background = ok ? 'var(--ok)' : 'var(--err)';
+  t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3500);
+}
+async function call(method, path, body) {
+  const url = API + path;
+  const res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  let data = null; try { data = await res.json(); } catch (_) {}
+  log(method, url, res.status, data);
+  return { ok: res.ok, code: res.status, data };
+}
+
+function renderTabs() {
+  $('tabs').innerHTML = Object.entries(ENT).map(([k, e]) => `<button data-e="${k}" class="${k === ent ? 'on' : ''}">${e.title}</button>`).join('');
+}
+function renderForm(row) {
+  const e = ENT[ent]; editing = row || null;
+  $('formTitle').textContent = (editing ? 'Editar' : (e.nuevo || 'Nuevo')) + ' ' + e.one;
+  $('form').innerHTML = e.fields.map(f => {
+    let v = row ? row[f.k] ?? '' : ''; if (v === 'null') v = '';
+    if (f.k === 'sex') v = SEX[v] || v;
+    const dis = editing && f.key ? 'disabled' : '';
+    const inp = f.opts
+      ? `<select name="${f.k}" ${dis}>${f.opts.map(([o, t]) => `<option value="${o}" ${o === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`
+      : `<input name="${f.k}" type="${f.type || 'text'}" value="${esc(v)}" ${dis}>`;
+    return `<label>${f.l}</label>${inp}`;
+  }).join('') + `<div class="row"><button class="btn pri" type="submit">${editing ? 'Guardar cambios' : 'Crear'}</button>
+    ${editing ? '<button class="btn" type="button" id="cancel">Cancelar</button>' : ''}</div>`;
+  if (editing) $('cancel').onclick = () => renderForm();
+}
+async function load() {
+  const e = ENT[ent];
+  $('listTitle').textContent = `${e.title} en ${db === 'MARIA' ? 'MariaDB' : 'MongoDB'}`;
+  $('detail').innerHTML = '';
+  const r = await call('GET', `/${ent}/${db}`);
+  const rows = r.ok && Array.isArray(r.data) ? r.data : [];
+  $('count').textContent = rows.length;
+  if (!rows.length) { $('list').innerHTML = '<div class="empty">Sin registros</div>'; return; }
+  $('list').innerHTML = `<table><tr>${e.cols.map(c => `<th>${c[1]}</th>`).join('')}<th></th></tr>` +
+    rows.map((row, i) => `<tr>${e.cols.map(([k]) => `<td>${esc(k === 'sex' ? SEX[row[k]] || row[k] : (row[k] === 'null' ? '' : row[k]))}</td>`).join('')}
+      <td class="act">${(e.extra || []).map(([t], j) => `<button class="btn sm" data-x="${i}:${j}">${t}</button>`).join(' ')}
+      <button class="btn sm" data-edit="${i}">Editar</button> <button class="btn sm del" data-del="${i}">Borrar</button></td></tr>`).join('') + '</table>';
+  $('list').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => renderForm(rows[b.dataset.edit]));
+  $('list').querySelectorAll('[data-del]').forEach(b => b.onclick = () => del(rows[b.dataset.del]));
+  $('list').querySelectorAll('[data-x]').forEach(b => b.onclick = () => { const [i, j] = b.dataset.x.split(':'); extra(rows[i], e.extra[j]); });
+}
+async function extra(row, [title, path, cols]) {
+  const k = ENT[ent].key(row);
+  const r = await call('GET', `/${ent}/${db}/${k}/${path}`);
+  const list = r.ok && Array.isArray(r.data) ? r.data : [];
+  $('detail').innerHTML = `<div class="sub"><h3>${title} de ${esc(k)}</h3>` + (list.length
+    ? `<table><tr>${cols.map(c => `<th>${c[1]}</th>`).join('')}</tr>${list.map(x => `<tr>${cols.map(c => `<td>${esc(x[c[0]])}</td>`).join('')}</tr>`).join('')}</table>`
+    : '<div class="empty">Ninguno</div>') + '</div>';
+}
+async function del(row) {
+  const e = ENT[ent], k = e.key(row);
+  if (!confirm(`¿Borrar ${e.one} ${k} de ${db}?`)) return;
+  const r = await call('DELETE', `/${ent}/${db}/${k}`);
+  toast(r.ok ? `${e.one} borrado` : `Error ${r.code}: ${r.data?.description || ''}`, r.ok);
+  if (r.ok) { renderForm(); load(); }
+}
+$('form').onsubmit = async ev => {
+  ev.preventDefault();
+  const e = ENT[ent], body = { database: db };
+  e.fields.forEach(f => body[f.k] = $('form').elements[f.k].value.trim());
+  if (editing) e.fields.filter(f => f.key).forEach(f => body[f.k] = String(editing[f.k]));
+  const r = editing ? await call('PUT', `/${ent}/${e.key(body)}`, body) : await call('POST', `/${ent}`, body);
+  toast(r.ok ? (editing ? 'Cambios guardados' : `${e.one} creado`) : `Error ${r.code}: ${r.data?.description || 'sin detalle'}`, r.ok);
+  if (r.ok) { renderForm(); load(); }
+};
+$('tabs').onclick = ev => { const k = ev.target.dataset.e; if (!k) return; ent = k; renderTabs(); renderForm(); load(); };
+$('db').onclick = ev => {
+  const d = ev.target.dataset.db; if (!d) return; db = d;
+  $('db').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.db === db)); renderForm(); load();
+};
+$('reload').onclick = load;
+renderTabs(); renderForm(); load();
+</script>
+</body>
+</html>

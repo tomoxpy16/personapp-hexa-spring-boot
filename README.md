@@ -6,6 +6,7 @@ Servicio web que expone el CRUD del modelo **persona / profesion / estudios / te
 **Arquitectura Hexagonal** (puertos y adaptadores) con los patrones **Repository** y **Service**.
 Tiene dos adaptadores de entrada (**API REST** documentada con Swagger y **CLI** de consola) y
 dos de salida (**MariaDB** y **MongoDB**). En cada operación se elige el motor de base de datos.
+Además, la API sirve una **interfaz web** sencilla que consume esos mismos endpoints.
 
 Basado en la plantilla [andres-karoll/personapp-hexa-spring-boot](https://github.com/andres-karoll/personapp-hexa-spring-boot).
 
@@ -42,7 +43,7 @@ Basado en la plantilla [andres-karoll/personapp-hexa-spring-boot](https://github
 | `application` | Puertos de entrada y salida, y casos de uso (reglas de negocio) |
 | `maria-output-adapter` | Persistencia en MariaDB con JPA (entidades, mappers, repositorios) |
 | `mongo-output-adapter` | Persistencia en MongoDB (documentos, mappers, repositorios) |
-| `rest-input-adapter` | API REST + Swagger (controllers, adapters que hacen de *Service*, DTOs) |
+| `rest-input-adapter` | API REST + Swagger (controllers, adapters que hacen de *Service*, DTOs) e interfaz web (`static/index.html`) |
 | `cli-input-adapter` | Interfaz de consola con un menú por entidad |
 
 Equivalencia con el patrón Controller–Service–Repository:
@@ -189,8 +190,15 @@ aplicación y los adaptadores de salida. Las bases de datos deben estar arriba a
 java -jar rest-input-adapter/target/rest-input-adapter-0.0.1-SNAPSHOT.jar
 ```
 
+- Interfaz web: http://localhost:3000/
 - Swagger UI: http://localhost:3000/swagger-ui.html
 - OpenAPI (JSON): http://localhost:3000/api-docs
+
+La interfaz web (`rest-input-adapter/src/main/resources/static/index.html`) es una página estática que
+Spring Boot sirve junto con la API. Tiene una pestaña por entidad y un selector de MariaDB / MongoDB, y
+permite crear, editar, borrar y ver las relaciones (teléfonos y estudios de una persona, estudios de
+una profesión). No agrega código Java: es un cliente de los endpoints REST, así que el núcleo no cambia.
+Al borrar una persona o una profesión también se borran sus teléfonos y estudios.
 
 ### CLI
 
