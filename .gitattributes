@@ -1,0 +1,5 @@
+# Los scripts se ejecutan en bash y en los contenedores: siempre con finales de linea LF
+*.sh   text eol=lf
+*.sql  text eol=lf
+*.js   text eol=lf
+*.yml  text eol=lf
