@@ -55,4 +55,16 @@ public class ProfesionMapperMongo {
 				.map(estudio -> estudiosMapperMongo.fromAdapterToDomain(estudio)).collect(Collectors.toList())
 				: new ArrayList<Study>();
 	}
+
+	/**
+	 * CORRECCION DEL MAPPER: version sin estudios, para cortar la recursion
+	 * Profesion -> Estudio -> Profesion -> ...
+	 */
+	public Profession fromAdapterToDomainShallow(ProfesionDocument profesionDocument) {
+		Profession profession = new Profession();
+		profession.setIdentification(profesionDocument.getId());
+		profession.setName(profesionDocument.getNom());
+		profession.setDescription(validateDescription(profesionDocument.getDes()));
+		return profession;
+	}
 }

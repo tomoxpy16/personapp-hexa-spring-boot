@@ -71,3 +71,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Maven flatten plugin
+.flattened-pom.xml

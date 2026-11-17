@@ -88,4 +88,19 @@ public class PersonaMapperMaria {
 				.map(telefono -> telefonoMapperMaria.fromAdapterToDomain(telefono)).collect(Collectors.toList())
 				: new ArrayList<Phone>();
 	}
+
+	/**
+	 * CORRECCION DEL MAPPER: version sin relaciones (telefonos/estudios). Las
+	 * relaciones hijas la usan para referenciar a la persona y asi cortar la
+	 * recursion Persona -> Estudio -> Persona -> ... (StackOverflowError).
+	 */
+	public Person fromAdapterToDomainShallow(PersonaEntity personaEntity) {
+		Person person = new Person();
+		person.setIdentification(personaEntity.getCc());
+		person.setFirstName(personaEntity.getNombre());
+		person.setLastName(personaEntity.getApellido());
+		person.setGender(validateGender(personaEntity.getGenero()));
+		person.setAge(validateAge(personaEntity.getEdad()));
+		return person;
+	}
 }

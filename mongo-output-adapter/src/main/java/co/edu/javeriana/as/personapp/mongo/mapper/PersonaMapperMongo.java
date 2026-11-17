@@ -88,4 +88,19 @@ public class PersonaMapperMongo {
 				.map(telefono -> telefonoMapperMongo.fromAdapterToDomain(telefono)).collect(Collectors.toList())
 				: new ArrayList<Phone>();
 	}
+
+	/**
+	 * CORRECCION DEL MAPPER: version sin relaciones (telefonos/estudios). Las
+	 * relaciones hijas la usan para referenciar a la persona y asi cortar la
+	 * recursion Persona -> Estudio -> Persona -> ... (StackOverflowError).
+	 */
+	public Person fromAdapterToDomainShallow(PersonaDocument personaDocument) {
+		Person person = new Person();
+		person.setIdentification(personaDocument.getId());
+		person.setFirstName(personaDocument.getNombre());
+		person.setLastName(personaDocument.getApellido());
+		person.setGender(validateGender(personaDocument.getGenero()));
+		person.setAge(validateAge(personaDocument.getEdad()));
+		return person;
+	}
 }

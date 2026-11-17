@@ -3,7 +3,10 @@ package co.edu.javeriana.as.personapp.mongo.adapter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.BasicQuery;
 
 import com.mongodb.MongoWriteException;
 
@@ -24,6 +27,9 @@ public class PersonOutputAdapterMongo implements PersonOutputPort {
 	
 	@Autowired
 	private PersonaMapperMongo personaMapperMongo;
+
+	@Autowired
+	private MongoTemplate mongoTemplate;
 	
 	@Override
 	public Person save(Person person) {
@@ -40,6 +46,9 @@ public class PersonOutputAdapterMongo implements PersonOutputPort {
 	@Override
 	public Boolean delete(Integer identification) {
 		log.debug("Into delete on Adapter MongoDB");
+		// Mongo no tiene llaves foraneas: se eliminan en cascada telefonos y estudios
+		mongoTemplate.remove(new BasicQuery(new Document("primaryDuenio", identification)), "telefono");
+		mongoTemplate.remove(new BasicQuery(new Document("primaryPersona", identification)), "estudios");
 		personaRepositoryMongo.deleteById(identification);
 		return personaRepositoryMongo.findById(identification).isEmpty();
 	}

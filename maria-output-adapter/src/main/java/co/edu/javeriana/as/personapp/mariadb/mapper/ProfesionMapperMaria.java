@@ -55,4 +55,16 @@ public class ProfesionMapperMaria {
 				.map(estudio -> estudiosMapperMaria.fromAdapterToDomain(estudio)).collect(Collectors.toList())
 				: new ArrayList<Study>();
 	}
+
+	/**
+	 * CORRECCION DEL MAPPER: version sin estudios, para cortar la recursion
+	 * Profesion -> Estudio -> Profesion -> ...
+	 */
+	public Profession fromAdapterToDomainShallow(ProfesionEntity profesionEntity) {
+		Profession profession = new Profession();
+		profession.setIdentification(profesionEntity.getId());
+		profession.setName(profesionEntity.getNom());
+		profession.setDescription(validateDescription(profesionEntity.getDes()));
+		return profession;
+	}
 }
