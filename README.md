@@ -190,14 +190,23 @@ aplicación y los adaptadores de salida. Las bases de datos deben estar arriba a
 java -jar rest-input-adapter/target/rest-input-adapter-0.0.1-SNAPSHOT.jar
 ```
 
-- Interfaz web: http://localhost:3000/
 - Swagger UI: http://localhost:3000/swagger-ui.html
 - OpenAPI (JSON): http://localhost:3000/api-docs
 
-La interfaz web (`rest-input-adapter/src/main/resources/static/index.html`) es una página estática que
-Spring Boot sirve junto con la API. Tiene una pestaña por entidad y un selector de MariaDB / MongoDB, y
-permite crear, editar, borrar y ver las relaciones (teléfonos y estudios de una persona, estudios de
-una profesión). No agrega código Java: es un cliente de los endpoints REST, así que el núcleo no cambia.
+### Interfaz web
+
+La interfaz web viene dentro de la API: se inicia con el mismo comando y se abre en el navegador.
+
+```bash
+java -jar rest-input-adapter/target/rest-input-adapter-0.0.1-SNAPSHOT.jar
+```
+
+- Interfaz web: http://localhost:3000/
+
+Es una página estática (`rest-input-adapter/src/main/resources/static/index.html`) que Spring Boot sirve
+junto con la API. Tiene una pestaña por entidad y un selector de MariaDB / MongoDB, y permite crear,
+editar, borrar y ver las relaciones (teléfonos y estudios de una persona, estudios de una profesión).
+No agrega código Java: es un cliente de los endpoints REST, así que el núcleo no cambia.
 Al borrar una persona o una profesión también se borran sus teléfonos y estudios.
 
 ### CLI
@@ -207,6 +216,12 @@ java -jar cli-input-adapter/target/cli-input-adapter-0.0.1-SNAPSHOT.jar
 ```
 
 Menú principal → módulo (Personas / Profesiones / Teléfonos / Estudios) → motor (MariaDB / MongoDB) → operación CRUD.
+
+El CLI no abre ningún puerto, así que puede correr en otra terminal al mismo tiempo que la API y la interfaz
+web. Los cambios hechos en uno se ven en el otro, porque usan las mismas bases de datos.
+
+Si al iniciar la API aparece `Port 3000 was already in use`, ya hay una copia de la API corriendo: hay que
+cerrarla (Ctrl+C en su terminal) antes de volver a iniciarla, o usar otro puerto con `--server.port=3001`.
 
 ### Verificar el despliegue
 
